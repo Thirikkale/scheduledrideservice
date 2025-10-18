@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: scheduled-ride-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://wendy:wendy@cluster0.buegvjp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0}
+      database: ${SPRING_DATA_MONGODB_DATABASE:scheduled_ride_db}
+      uuid-representation: standard
+      auto-index-creation: true
+
+scheduler:
+  matching:
+    interval: 120000
+    timeWindowMinutes: 10
+    pickupRadiusMeters: 800
+    maxGroupSize: 3
+    maxDetourMinutes: 8
+  dispatch:
+    leadTimeMinutes: 10
+    interval: 30000
+
+rabbitmq:
+  host: ${RABBITMQ_HOST:localhost}
+  port: ${RABBITMQ_PORT:5672}
+  username: ${RABBITMQ_USERNAME:guest}
+  password: ${RABBITMQ_PASSWORD:guest}
+  exchange: ${RABBITMQ_EXCHANGE:ride.requests.exchange}
+  routing:
+    solo: ${RABBITMQ_ROUTING_SOLO:ride.request.solo}
+    shared: ${RABBITMQ_ROUTING_SHARED:ride.request.shared}
+
+logging:
+  level:
+    root: INFO
+    com.thirikkale.scheduledrideservice: DEBUG
