@@ -14,6 +14,8 @@ public interface ScheduledRideRepository extends MongoRepository<ScheduledRide, 
     List<ScheduledRide> findByStatusAndScheduledTimeBefore(
             ScheduledRideStatus status, LocalDateTime before);
 
-    List<ScheduledRide> findBySharedTrueAndStatusAndScheduledTimeBetween(
+    List<ScheduledRide> findByIsSharedRideTrueAndStatusAndScheduledTimeBetween(
             ScheduledRideStatus status, LocalDateTime start, LocalDateTime end);
+
+        List<ScheduledRide> findByRiderId(String riderId);
 }

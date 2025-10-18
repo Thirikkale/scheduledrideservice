@@ -16,14 +16,15 @@ public class ScheduledRideCreateRequestDto {
     @NotNull private Double dropoffLongitude;
     @NotNull private LocalDateTime scheduledTime;
     @NotNull private Integer passengers;
-    @NotNull private Boolean shared;
+    @NotNull private Boolean isSharedRide;
 
     // Ride options and preferences
     @NotBlank private String rideType;     // must match rideservice RideType enum name
     @NotBlank private String vehicleType;  // must match rideservice VehicleType enum name
     @Positive private Double distanceKm;         // optional, server computes if null
     @PositiveOrZero private Integer waitingTimeMin;
-    private Boolean womenOnly;
+    private Boolean isWomenOnly;
+    private String driverId;
     @Positive private Double maxFare;
     private String specialRequests;
 }

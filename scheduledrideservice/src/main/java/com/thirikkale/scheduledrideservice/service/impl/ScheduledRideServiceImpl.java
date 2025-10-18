@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +33,15 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         .dropoffLatitude(req.getDropoffLatitude())
         .dropoffLongitude(req.getDropoffLongitude())
         .passengers(req.getPassengers())
-        .shared(req.getShared())
+            .isSharedRide(req.getIsSharedRide())
         .scheduledTime(req.getScheduledTime())
-        .status(req.getShared() ? ScheduledRideStatus.GROUPING : ScheduledRideStatus.SCHEDULED)
+            .status(req.getIsSharedRide() ? ScheduledRideStatus.GROUPING : ScheduledRideStatus.SCHEDULED)
         .rideType(req.getRideType())
         .vehicleType(req.getVehicleType())
         .distanceKm(req.getDistanceKm())
         .waitingTimeMin(req.getWaitingTimeMin())
-        .womenOnly(req.getWomenOnly())
+            .isWomenOnly(req.getIsWomenOnly())
+            .driverId(req.getDriverId())
         .maxFare(req.getMaxFare())
         .specialRequests(req.getSpecialRequests())
         .build(); // MongoDB will auto-generate id
@@ -49,20 +49,35 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
     return ScheduledRideResponseDto.builder()
         .id(ride.getId())
         .riderId(ride.getRiderId())
-        .shared(ride.getShared())
+        .pickupAddress(ride.getPickupAddress())
+        .pickupLatitude(ride.getPickupLatitude())
+        .pickupLongitude(ride.getPickupLongitude())
+        .dropoffAddress(ride.getDropoffAddress())
+        .dropoffLatitude(ride.getDropoffLatitude())
+        .dropoffLongitude(ride.getDropoffLongitude())
         .passengers(ride.getPassengers())
+            .isSharedRide(ride.getIsSharedRide())
         .scheduledTime(ride.getScheduledTime())
         .status(ride.getStatus().name())
         .sharedGroupId(ride.getSharedGroupId())
+        .rideType(ride.getRideType())
+        .vehicleType(ride.getVehicleType())
+        .distanceKm(ride.getDistanceKm())
+        .waitingTimeMin(ride.getWaitingTimeMin())
+            .isWomenOnly(ride.getIsWomenOnly())
+            .driverId(ride.getDriverId())
+        .maxFare(ride.getMaxFare())
+        .specialRequests(ride.getSpecialRequests())
         .build();
     }
 
     @Override
-    public void cancelRide(String id) {
-        repo.findById(id).ifPresent(r -> {
+    public boolean cancelRide(String id) {
+        return repo.findById(id).map(r -> {
             r.setStatus(ScheduledRideStatus.CANCELLED);
             repo.save(r);
-        });
+            return true;
+        }).orElse(false);
     }
 
     @Override
@@ -75,5 +90,33 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         repo.saveAll(rides);
     // Return String ids directly
     return rides.stream().map(ScheduledRide::getId).toList();
+    }
+
+    @Override
+    public List<ScheduledRideResponseDto> getRidesByRiderId(String riderId) {
+        List<ScheduledRide> rides = repo.findByRiderId(riderId);
+    return rides.stream().map(r -> ScheduledRideResponseDto.builder()
+        .id(r.getId())
+        .riderId(r.getRiderId())
+        .pickupAddress(r.getPickupAddress())
+        .pickupLatitude(r.getPickupLatitude())
+        .pickupLongitude(r.getPickupLongitude())
+        .dropoffAddress(r.getDropoffAddress())
+        .dropoffLatitude(r.getDropoffLatitude())
+        .dropoffLongitude(r.getDropoffLongitude())
+        .passengers(r.getPassengers())
+            .isSharedRide(r.getIsSharedRide())
+        .scheduledTime(r.getScheduledTime())
+        .status(r.getStatus().name())
+        .sharedGroupId(r.getSharedGroupId())
+        .rideType(r.getRideType())
+        .vehicleType(r.getVehicleType())
+        .distanceKm(r.getDistanceKm())
+        .waitingTimeMin(r.getWaitingTimeMin())
+            .isWomenOnly(r.getIsWomenOnly())
+            .driverId(r.getDriverId())
+        .maxFare(r.getMaxFare())
+        .specialRequests(r.getSpecialRequests())
+        .build()).toList();
     }
 }

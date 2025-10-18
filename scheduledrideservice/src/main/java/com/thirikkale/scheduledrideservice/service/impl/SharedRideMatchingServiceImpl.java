@@ -33,7 +33,7 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
 
     @Override
     public void buildOrUpdateGroups(LocalDateTime windowStart, LocalDateTime windowEnd) {
-    java.util.List<ScheduledRide> candidates = rideRepo.findBySharedTrueAndStatusAndScheduledTimeBetween(
+    java.util.List<ScheduledRide> candidates = rideRepo.findByIsSharedRideTrueAndStatusAndScheduledTimeBetween(
                 ScheduledRideStatus.GROUPING, windowStart, windowEnd);
 
         // Simple greedy clustering by time window and pickup proximity
@@ -83,7 +83,7 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
     // Find rides in groups due for dispatch
     // Use a reasonable lower bound instead of LocalDateTime.MIN to avoid conversion errors
     LocalDateTime lowerBound = LocalDateTime.now().minusYears(1); // or another safe default
-    java.util.List<ScheduledRide> due = rideRepo.findBySharedTrueAndStatusAndScheduledTimeBetween(
+    java.util.List<ScheduledRide> due = rideRepo.findByIsSharedRideTrueAndStatusAndScheduledTimeBetween(
         ScheduledRideStatus.SCHEDULED,
         lowerBound, dispatchBefore);
 

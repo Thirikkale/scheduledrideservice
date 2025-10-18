@@ -25,7 +25,7 @@ public class ScheduledRide {
     private Double dropoffLongitude;
 
     private Integer passengers;
-    private Boolean shared; // true for shared ride request
+    private Boolean isSharedRide; // true for shared ride request
 
     @Indexed
     private LocalDateTime scheduledTime;
@@ -38,7 +38,9 @@ public class ScheduledRide {
     private String vehicleType;    // enum name as String
     private Double distanceKm;
     private Integer waitingTimeMin;
-    private Boolean womenOnly;
+    private Boolean isWomenOnly;
+    // Driver assigned to the scheduled ride
+    private String driverId;
     private Double maxFare;
     private String specialRequests;
 

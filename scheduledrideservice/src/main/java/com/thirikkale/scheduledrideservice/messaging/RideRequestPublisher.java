@@ -36,7 +36,8 @@ public class RideRequestPublisher {
                 payload.put("vehicleType", r.getVehicleType());
                 payload.put("distanceKm", r.getDistanceKm());
                 payload.put("waitingTimeMin", r.getWaitingTimeMin());
-                payload.put("womenOnly", r.getWomenOnly());
+                payload.put("womenOnly", r.getIsWomenOnly());
+                payload.put("driverId", r.getDriverId());
                 payload.put("maxFare", r.getMaxFare());
                 payload.put("specialRequests", r.getSpecialRequests());
     }
