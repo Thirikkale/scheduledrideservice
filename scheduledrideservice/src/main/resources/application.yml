@@ -11,6 +11,11 @@ spring:
       uuid-representation: standard
       auto-index-creation: true
 
+server:
+  port: ${PORT:8085}
+  servlet:
+    context-path: /scheduling-service
+
 scheduler:
   matching:
     interval: 120000

@@ -1,7 +1,5 @@
 package com.thirikkale.scheduledrideservice.messaging;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thirikkale.scheduledrideservice.model.ScheduledRide;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.TopicExchange;
@@ -23,7 +21,7 @@ public class RideRequestPublisher {
 
     public void publishSoloRideRequest(ScheduledRide r) {
         Map<String, Object> payload = Map.of(
-                "rideId", r.getId().toString(),
+                "rideId", r.getId(),
                 "riderId", r.getRiderId().toString(),
                 "pickupLat", r.getPickupLatitude(),
                 "pickupLng", r.getPickupLongitude(),
@@ -33,14 +31,21 @@ public class RideRequestPublisher {
                 "passengers", r.getPassengers(),
                 "isShared", false
         );
-        rabbitTemplate.convertAndSend(rideRequestsExchange.getName(), soloRoutingKey, payload);
+                rabbitTemplate.convertAndSend(rideRequestsExchange.getName(), soloRoutingKey, payload);
+                payload.put("rideType", r.getRideType());
+                payload.put("vehicleType", r.getVehicleType());
+                payload.put("distanceKm", r.getDistanceKm());
+                payload.put("waitingTimeMin", r.getWaitingTimeMin());
+                payload.put("womenOnly", r.getWomenOnly());
+                payload.put("maxFare", r.getMaxFare());
+                payload.put("specialRequests", r.getSpecialRequests());
     }
 
-    public void publishSharedRideGroupRequest(java.util.UUID groupId, java.util.List<ScheduledRide> members) {
+        public void publishSharedRideGroupRequest(String groupId, java.util.List<ScheduledRide> members) {
     java.util.List<Map<String, Object>> riders = new ArrayList<>();
     for (ScheduledRide r : members) {
             riders.add(Map.of(
-                    "scheduledRideId", r.getId().toString(),
+                    "scheduledRideId", r.getId(),
                     "riderId", r.getRiderId().toString(),
                     "pickupLat", r.getPickupLatitude(),
                     "pickupLng", r.getPickupLongitude(),

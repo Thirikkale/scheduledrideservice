@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/scheduled-rides")
@@ -22,7 +21,7 @@ public class ScheduledRideController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancel(@PathVariable UUID id) {
+    public ResponseEntity<Void> cancel(@PathVariable String id) {
         scheduledRideService.cancelRide(id);
         return ResponseEntity.noContent().build();
     }

@@ -13,9 +13,9 @@ import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class ScheduledRide {
     @Id
-    private UUID id;
+    private String id;
 
-    private UUID riderId;
+    private String riderId;
     private String pickupAddress;
     private Double pickupLatitude;
     private Double pickupLongitude;
@@ -29,10 +29,18 @@ public class ScheduledRide {
 
     @Indexed
     private LocalDateTime scheduledTime;
-    // store enum as String automatically by Spring Data MongoDB
     private ScheduledRideStatus status;
 
-    private UUID sharedGroupId; // nullable; populated when grouped
+    private String sharedGroupId; // nullable; populated when grouped
+
+    // Ride options and preferences for dispatch
+    private String rideType;       // enum name as String
+    private String vehicleType;    // enum name as String
+    private Double distanceKm;
+    private Integer waitingTimeMin;
+    private Boolean womenOnly;
+    private Double maxFare;
+    private String specialRequests;
 
     // optional precomputed estimates
     private BigDecimal estimatedFare;

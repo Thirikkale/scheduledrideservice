@@ -4,16 +4,15 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.*;
-import java.util.UUID;
 
 @Document(collection = "scheduled_shared_group_members")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class ScheduledSharedRideMember {
     @Id
-    private UUID id;
+    private String id;
 
     @Indexed
-    private UUID groupId;
+    private String groupId;
     @Indexed
-    private UUID rideId;
+    private String rideId;
 }

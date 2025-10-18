@@ -1,6 +1,8 @@
 package com.thirikkale.scheduledrideservice.service.impl;
 
-import com.thirikkale.scheduledrideservice.model.*;
+import com.thirikkale.scheduledrideservice.model.ScheduledRide;
+import com.thirikkale.scheduledrideservice.model.ScheduledSharedRideGroup;
+import com.thirikkale.scheduledrideservice.model.ScheduledSharedRideMember;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 import com.thirikkale.scheduledrideservice.repository.*;
 import com.thirikkale.scheduledrideservice.service.SharedRideMatchingService;
@@ -66,11 +68,11 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
                 group = groupRepo.save(group);
 
                 for (ScheduledRide m : cluster) {
-                    m.setSharedGroupId(group.getId());
+                    m.setSharedGroupId(group.getId()); // group id is now String
                     m.setStatus(ScheduledRideStatus.SCHEDULED);
                     rideRepo.save(m);
                     memberRepo.save(ScheduledSharedRideMember.builder()
-                            .groupId(group.getId()).rideId(m.getId()).build());
+                            .groupId(group.getId()).rideId(m.getId()).build()); // ids are String
                 }
             }
         }
@@ -78,10 +80,12 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
 
     @Override
     public void dispatchDueGroups(LocalDateTime dispatchBefore) {
-        // Find rides in groups due for dispatch
+    // Find rides in groups due for dispatch
+    // Use a reasonable lower bound instead of LocalDateTime.MIN to avoid conversion errors
+    LocalDateTime lowerBound = LocalDateTime.now().minusYears(1); // or another safe default
     java.util.List<ScheduledRide> due = rideRepo.findBySharedTrueAndStatusAndScheduledTimeBetween(
-                ScheduledRideStatus.SCHEDULED,
-                LocalDateTime.MIN, dispatchBefore);
+        ScheduledRideStatus.SCHEDULED,
+        lowerBound, dispatchBefore);
 
         // Group by sharedGroupId and dispatch each group once
     due.stream()

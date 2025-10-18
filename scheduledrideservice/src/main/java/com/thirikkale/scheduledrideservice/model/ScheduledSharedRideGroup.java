@@ -5,14 +5,13 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 
 @Document(collection = "scheduled_shared_groups")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class ScheduledSharedRideGroup {
     @Id
-    private UUID id;
+    private String id;
 
     @Indexed
     private LocalDateTime scheduledWindowStart;

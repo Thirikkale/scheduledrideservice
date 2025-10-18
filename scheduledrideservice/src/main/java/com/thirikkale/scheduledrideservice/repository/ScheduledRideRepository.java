@@ -6,9 +6,8 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
-public interface ScheduledRideRepository extends MongoRepository<ScheduledRide, UUID> {
+public interface ScheduledRideRepository extends MongoRepository<ScheduledRide, String> {
     List<ScheduledRide> findByStatusAndScheduledTimeBetween(
             ScheduledRideStatus status, LocalDateTime start, LocalDateTime end);
 
