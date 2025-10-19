@@ -8,7 +8,9 @@ import java.util.List;
 
 public interface ScheduledRideService {
     ScheduledRideResponseDto scheduleRide(ScheduledRideCreateRequestDto request);
-    boolean cancelRide(String id);
+    ScheduledRideResponseDto cancelRide(String id);
     List<String> dispatchDueSoloRides(LocalDateTime dispatchBefore);
     List<ScheduledRideResponseDto> getRidesByRiderId(String riderId);
+    ScheduledRideResponseDto assignDriverToRide(String rideId, String driverId);
+    ScheduledRideResponseDto removeDriverFromRide(String rideId);
 }

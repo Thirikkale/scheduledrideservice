@@ -45,7 +45,11 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         .maxFare(req.getMaxFare())
         .specialRequests(req.getSpecialRequests())
         .build(); // MongoDB will auto-generate id
-        ride = repo.save(ride);
+    ride = repo.save(ride);
+    // Publish solo ride request if not shared
+    if (!ride.getIsSharedRide()) {
+        publisher.publishSoloRideRequest(ride);
+    }
     return ScheduledRideResponseDto.builder()
         .id(ride.getId())
         .riderId(ride.getRiderId())
@@ -72,12 +76,34 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
     }
 
     @Override
-    public boolean cancelRide(String id) {
-        return repo.findById(id).map(r -> {
-            r.setStatus(ScheduledRideStatus.CANCELLED);
-            repo.save(r);
-            return true;
-        }).orElse(false);
+    public ScheduledRideResponseDto cancelRide(String id) {
+        ScheduledRide ride = repo.findById(id)
+            .orElseThrow(() -> new RuntimeException("No ride found with id: " + id));
+        ride.setStatus(ScheduledRideStatus.CANCELLED);
+        ride = repo.save(ride);
+        return ScheduledRideResponseDto.builder()
+            .id(ride.getId())
+            .riderId(ride.getRiderId())
+            .pickupAddress(ride.getPickupAddress())
+            .pickupLatitude(ride.getPickupLatitude())
+            .pickupLongitude(ride.getPickupLongitude())
+            .dropoffAddress(ride.getDropoffAddress())
+            .dropoffLatitude(ride.getDropoffLatitude())
+            .dropoffLongitude(ride.getDropoffLongitude())
+            .passengers(ride.getPassengers())
+            .isSharedRide(ride.getIsSharedRide())
+            .scheduledTime(ride.getScheduledTime())
+            .status(ride.getStatus().name())
+            .sharedGroupId(ride.getSharedGroupId())
+            .rideType(ride.getRideType())
+            .vehicleType(ride.getVehicleType())
+            .distanceKm(ride.getDistanceKm())
+            .waitingTimeMin(ride.getWaitingTimeMin())
+            .isWomenOnly(ride.getIsWomenOnly())
+            .driverId(ride.getDriverId())
+            .maxFare(ride.getMaxFare())
+            .specialRequests(ride.getSpecialRequests())
+            .build();
     }
 
     @Override
@@ -118,5 +144,91 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         .maxFare(r.getMaxFare())
         .specialRequests(r.getSpecialRequests())
         .build()).toList();
+    }
+
+    @Override
+    public ScheduledRideResponseDto assignDriverToRide(String rideId, String driverId) {
+        ScheduledRide ride = repo.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Scheduled ride not found with id: " + rideId));
+        
+        // Only allow driver assignment for scheduled or grouping rides
+        if (ride.getStatus() != ScheduledRideStatus.SCHEDULED && ride.getStatus() != ScheduledRideStatus.GROUPING) {
+            throw new RuntimeException("Cannot assign driver to ride with status: " + ride.getStatus());
+        }
+        
+        // Check if driver is already assigned
+        if (ride.getDriverId() != null && !ride.getDriverId().isEmpty()) {
+            throw new RuntimeException("Driver already assigned to this ride. Current driver: " + ride.getDriverId());
+        }
+        
+        ride.setDriverId(driverId);
+        ride = repo.save(ride);
+        
+        return ScheduledRideResponseDto.builder()
+                .id(ride.getId())
+                .riderId(ride.getRiderId())
+                .pickupAddress(ride.getPickupAddress())
+                .pickupLatitude(ride.getPickupLatitude())
+                .pickupLongitude(ride.getPickupLongitude())
+                .dropoffAddress(ride.getDropoffAddress())
+                .dropoffLatitude(ride.getDropoffLatitude())
+                .dropoffLongitude(ride.getDropoffLongitude())
+                .passengers(ride.getPassengers())
+                .isSharedRide(ride.getIsSharedRide())
+                .scheduledTime(ride.getScheduledTime())
+                .status(ride.getStatus().name())
+                .sharedGroupId(ride.getSharedGroupId())
+                .rideType(ride.getRideType())
+                .vehicleType(ride.getVehicleType())
+                .distanceKm(ride.getDistanceKm())
+                .waitingTimeMin(ride.getWaitingTimeMin())
+                .isWomenOnly(ride.getIsWomenOnly())
+                .driverId(ride.getDriverId())
+                .maxFare(ride.getMaxFare())
+                .specialRequests(ride.getSpecialRequests())
+                .build();
+    }
+
+    @Override
+    public ScheduledRideResponseDto removeDriverFromRide(String rideId) {
+        ScheduledRide ride = repo.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Scheduled ride not found with id: " + rideId));
+        
+        // Only allow driver removal for scheduled or grouping rides
+        if (ride.getStatus() != ScheduledRideStatus.SCHEDULED && ride.getStatus() != ScheduledRideStatus.GROUPING) {
+            throw new RuntimeException("Cannot remove driver from ride with status: " + ride.getStatus());
+        }
+        
+        // Check if driver is assigned
+        if (ride.getDriverId() == null || ride.getDriverId().isEmpty()) {
+            throw new RuntimeException("No driver assigned to this ride");
+        }
+        
+        ride.setDriverId(null);
+        ride = repo.save(ride);
+        
+        return ScheduledRideResponseDto.builder()
+                .id(ride.getId())
+                .riderId(ride.getRiderId())
+                .pickupAddress(ride.getPickupAddress())
+                .pickupLatitude(ride.getPickupLatitude())
+                .pickupLongitude(ride.getPickupLongitude())
+                .dropoffAddress(ride.getDropoffAddress())
+                .dropoffLatitude(ride.getDropoffLatitude())
+                .dropoffLongitude(ride.getDropoffLongitude())
+                .passengers(ride.getPassengers())
+                .isSharedRide(ride.getIsSharedRide())
+                .scheduledTime(ride.getScheduledTime())
+                .status(ride.getStatus().name())
+                .sharedGroupId(ride.getSharedGroupId())
+                .rideType(ride.getRideType())
+                .vehicleType(ride.getVehicleType())
+                .distanceKm(ride.getDistanceKm())
+                .waitingTimeMin(ride.getWaitingTimeMin())
+                .isWomenOnly(ride.getIsWomenOnly())
+                .driverId(ride.getDriverId())
+                .maxFare(ride.getMaxFare())
+                .specialRequests(ride.getSpecialRequests())
+                .build();
     }
 }
