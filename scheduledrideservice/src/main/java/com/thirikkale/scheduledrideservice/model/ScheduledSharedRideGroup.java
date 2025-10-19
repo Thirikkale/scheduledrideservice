@@ -4,8 +4,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Document(collection = "scheduled_shared_groups")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
@@ -14,9 +15,11 @@ public class ScheduledSharedRideGroup {
     private String id;
 
     @Indexed
-    private LocalDateTime scheduledWindowStart;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant scheduledWindowStart;
     @Indexed
-    private LocalDateTime scheduledWindowEnd;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant scheduledWindowEnd;
 
     private Double centroidPickupLat;
     private Double centroidPickupLng;
@@ -26,6 +29,8 @@ public class ScheduledSharedRideGroup {
 
     private ScheduledRideStatus status; // GROUPING -> SCHEDULED -> DISPATCHED/CANCELLED
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant updatedAt;
 }

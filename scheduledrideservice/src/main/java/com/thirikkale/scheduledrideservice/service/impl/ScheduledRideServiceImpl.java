@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -51,6 +51,7 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
 
     @Override
     public ScheduledRideResponseDto scheduleRide(ScheduledRideCreateRequestDto req) {
+    Instant now = Instant.now();
     ScheduledRide ride = ScheduledRide.builder()
         .riderId(req.getRiderId())
         .pickupAddress(req.getPickupAddress())
@@ -71,6 +72,8 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
             .driverId(req.getDriverId())
         .maxFare(req.getMaxFare())
         .specialRequests(req.getSpecialRequests())
+        .createdAt(now)
+        .updatedAt(now)
         .build(); // MongoDB will auto-generate id
     ride = repo.save(ride);
     // Publish solo ride request if not shared
@@ -107,6 +110,7 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         ScheduledRide ride = repo.findById(id)
             .orElseThrow(() -> new RuntimeException("No ride found with id: " + id));
         ride.setStatus(ScheduledRideStatus.CANCELLED);
+        ride.setUpdatedAt(Instant.now());
         ride = repo.save(ride);
         return ScheduledRideResponseDto.builder()
             .id(ride.getId())
@@ -134,11 +138,12 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
     }
 
     @Override
-    public List<String> dispatchDueSoloRides(LocalDateTime dispatchBefore) {
+    public List<String> dispatchDueSoloRides(Instant dispatchBefore) {
         List<ScheduledRide> rides = repo.findByStatusAndScheduledTimeBefore(ScheduledRideStatus.SCHEDULED, dispatchBefore);
         rides.forEach(r -> {
             publisher.publishSoloRideRequest(r);
             r.setStatus(ScheduledRideStatus.DISPATCHED);
+            r.setUpdatedAt(Instant.now());
         });
         repo.saveAll(rides);
     // Return String ids directly
@@ -217,6 +222,7 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         }
         
         ride.setDriverId(driverId);
+        ride.setUpdatedAt(Instant.now());
         ride = repo.save(ride);
         
         return ScheduledRideResponseDto.builder()
@@ -260,6 +266,7 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         }
         
         ride.setDriverId(null);
+        ride.setUpdatedAt(Instant.now());
         ride = repo.save(ride);
         
         return ScheduledRideResponseDto.builder()

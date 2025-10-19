@@ -8,7 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -22,15 +23,15 @@ public class RideScheduler {
 
     @Scheduled(fixedDelayString = "${scheduler.matching.interval:120000}")
     public void matchSharedRides() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime windowStart = now.minusMinutes(leadTimeMinutes + 15);
-        LocalDateTime windowEnd = now.plusMinutes(leadTimeMinutes + 15);
+        Instant now = Instant.now();
+        Instant windowStart = now.minus(leadTimeMinutes + 15, ChronoUnit.MINUTES);
+        Instant windowEnd = now.plus(leadTimeMinutes + 15, ChronoUnit.MINUTES);
         sharedRideMatchingService.buildOrUpdateGroups(windowStart, windowEnd);
     }
 
     @Scheduled(fixedDelayString = "${scheduler.dispatch.interval:30000}")
     public void dispatchDue() {
-        LocalDateTime dispatchBefore = LocalDateTime.now().plusMinutes(leadTimeMinutes);
+        Instant dispatchBefore = Instant.now().plus(leadTimeMinutes, ChronoUnit.MINUTES);
         scheduledRideService.dispatchDueSoloRides(dispatchBefore);
         sharedRideMatchingService.dispatchDueGroups(dispatchBefore);
     }

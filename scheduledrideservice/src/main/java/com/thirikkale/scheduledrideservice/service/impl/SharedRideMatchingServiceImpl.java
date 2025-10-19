@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.*;
+import java.time.Instant;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import static java.lang.Math.*;
 
@@ -32,7 +34,8 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
     @Value("${scheduler.matching.maxDetourMinutes:8}") private int maxDetourMinutes;
 
     @Override
-    public void buildOrUpdateGroups(LocalDateTime windowStart, LocalDateTime windowEnd) {
+    public void buildOrUpdateGroups(Instant windowStart, Instant windowEnd) {
+        Instant now = Instant.now();
     java.util.List<ScheduledRide> candidates = rideRepo.findByIsSharedRideTrueAndStatusAndScheduledTimeBetween(
                 ScheduledRideStatus.GROUPING, windowStart, windowEnd);
 
@@ -57,19 +60,22 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
             if (cluster.size() >= 2) {
                 double[] centroid = centroid(cluster);
                 ScheduledSharedRideGroup group = ScheduledSharedRideGroup.builder()
-                        .scheduledWindowStart(r.getScheduledTime().minusMinutes(timeWindowMinutes))
-                        .scheduledWindowEnd(r.getScheduledTime().plusMinutes(timeWindowMinutes))
+                        .scheduledWindowStart(r.getScheduledTime().minus(timeWindowMinutes, ChronoUnit.MINUTES))
+                        .scheduledWindowEnd(r.getScheduledTime().plus(timeWindowMinutes, ChronoUnit.MINUTES))
                         .centroidPickupLat(centroid[0])
                         .centroidPickupLng(centroid[1])
                         .maxGroupSize(maxGroupSize)
                         .currentSize(cluster.size())
                         .status(ScheduledRideStatus.SCHEDULED)
+                        .createdAt(now)
+                        .updatedAt(now)
                         .build();
                 group = groupRepo.save(group);
 
                 for (ScheduledRide m : cluster) {
                     m.setSharedGroupId(group.getId()); // group id is now String
                     m.setStatus(ScheduledRideStatus.SCHEDULED);
+                    m.setUpdatedAt(now);
                     rideRepo.save(m);
                     memberRepo.save(ScheduledSharedRideMember.builder()
                             .groupId(group.getId()).rideId(m.getId()).build()); // ids are String
@@ -79,10 +85,11 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
     }
 
     @Override
-    public void dispatchDueGroups(LocalDateTime dispatchBefore) {
+    public void dispatchDueGroups(Instant dispatchBefore) {
+        Instant now = Instant.now();
     // Find rides in groups due for dispatch
-    // Use a reasonable lower bound instead of LocalDateTime.MIN to avoid conversion errors
-    LocalDateTime lowerBound = LocalDateTime.now().minusYears(1); // or another safe default
+    // Use a reasonable lower bound - 1 year ago
+    Instant lowerBound = now.minus(365, ChronoUnit.DAYS);
     java.util.List<ScheduledRide> due = rideRepo.findByIsSharedRideTrueAndStatusAndScheduledTimeBetween(
         ScheduledRideStatus.SCHEDULED,
         lowerBound, dispatchBefore);
@@ -99,14 +106,21 @@ public class SharedRideMatchingServiceImpl implements SharedRideMatchingService 
                        .toList();
                if (!members.isEmpty()) {
                    publisher.publishSharedRideGroupRequest(groupId, members);
-                   members.forEach(m -> m.setStatus(ScheduledRideStatus.DISPATCHED));
+                   members.forEach(m -> {
+                       m.setStatus(ScheduledRideStatus.DISPATCHED);
+                       m.setUpdatedAt(now);
+                   });
                    rideRepo.saveAll(members);
-                   groupRepo.findById(groupId).ifPresent(g -> { g.setStatus(ScheduledRideStatus.DISPATCHED); groupRepo.save(g); });
+                   groupRepo.findById(groupId).ifPresent(g -> { 
+                       g.setStatus(ScheduledRideStatus.DISPATCHED);
+                       g.setUpdatedAt(now);
+                       groupRepo.save(g); 
+                   });
                }
            });
     }
 
-    private static long minutesBetween(LocalDateTime a, LocalDateTime b) {
+    private static long minutesBetween(Instant a, Instant b) {
         return Duration.between(a, b).abs().toMinutes();
     }
 

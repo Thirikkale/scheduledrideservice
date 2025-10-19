@@ -5,9 +5,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.Instant;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Document(collection = "scheduled_rides")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
@@ -28,7 +28,8 @@ public class ScheduledRide {
     private Boolean isSharedRide; // true for shared ride request
 
     @Indexed
-    private LocalDateTime scheduledTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant scheduledTime;
     private ScheduledRideStatus status;
 
     private String sharedGroupId; // nullable; populated when grouped
@@ -49,6 +50,8 @@ public class ScheduledRide {
     private Double estimatedDistanceKm;
     private Integer estimatedDurationMin;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant updatedAt;
 }

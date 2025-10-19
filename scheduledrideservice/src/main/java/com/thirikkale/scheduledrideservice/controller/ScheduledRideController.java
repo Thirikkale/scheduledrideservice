@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 
 @RestController
 @RequestMapping("/api/scheduled-rides")
@@ -33,17 +37,33 @@ public class ScheduledRideController {
         }
     }
     private static final Logger log = LoggerFactory.getLogger(ScheduledRideController.class);
+    private static final DateTimeFormatter UTC_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private final ScheduledRideService scheduledRideService;
 
     @PostMapping
     public ResponseEntity<ScheduledRideResponseDto> schedule(@Valid @RequestBody ScheduledRideCreateRequestDto req) {
-        log.debug("Received schedule request: {}", req);
+        Instant receivedTime = req.getScheduledTime();
+        
+        // Enhanced logging for timezone debugging
+        log.info("=== TIMESTAMP DEBUGGING ===");
+        log.info("Received scheduledTime from frontend: {}", receivedTime);
+        log.info("Timestamp in UTC ISO-8601: {}", UTC_FORMATTER.format(receivedTime));
+        log.info("Timestamp epoch millis: {}", receivedTime.toEpochMilli());
+        log.info("Timestamp as UTC LocalDateTime: {}", receivedTime.atOffset(ZoneOffset.UTC));
+        log.info("Full request: {}", req);
+        
         try {
             ScheduledRideResponseDto response = scheduledRideService.scheduleRide(req);
+            
+            log.info("Response scheduledTime: {}", response.getScheduledTime());
+            log.info("Response scheduledTime in UTC ISO-8601: {}", 
+                response.getScheduledTime() != null ? UTC_FORMATTER.format(response.getScheduledTime()) : "null");
+            log.info("=== END TIMESTAMP DEBUGGING ===");
             log.debug("Scheduled ride response: {}", response);
+            
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
-            log.error("Error scheduling ride: {}", ex.getMessage());
+            log.error("Error scheduling ride: {}", ex.getMessage(), ex);
             return ResponseEntity.status(400).body(
                 ScheduledRideResponseDto.builder()
                     .status("ERROR: " + ex.getMessage())

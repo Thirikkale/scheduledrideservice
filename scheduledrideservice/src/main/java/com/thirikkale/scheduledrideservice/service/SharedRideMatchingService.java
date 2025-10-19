@@ -1,8 +1,8 @@
 package com.thirikkale.scheduledrideservice.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public interface SharedRideMatchingService {
-    void buildOrUpdateGroups(LocalDateTime windowStart, LocalDateTime windowEnd);
-    void dispatchDueGroups(LocalDateTime dispatchBefore);
+    void buildOrUpdateGroups(Instant windowStart, Instant windowEnd);
+    void dispatchDueGroups(Instant dispatchBefore);
 }

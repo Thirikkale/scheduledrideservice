@@ -1,7 +1,8 @@
 package com.thirikkale.scheduledrideservice.dto;
 
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ScheduledRideResponseDto {
@@ -15,7 +16,10 @@ public class ScheduledRideResponseDto {
     private Double dropoffLongitude;
     private Integer passengers;
     private Boolean isSharedRide;
-    private LocalDateTime scheduledTime;
+    
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private Instant scheduledTime;
+    
     private String status;
     private String sharedGroupId;
     private String rideType;

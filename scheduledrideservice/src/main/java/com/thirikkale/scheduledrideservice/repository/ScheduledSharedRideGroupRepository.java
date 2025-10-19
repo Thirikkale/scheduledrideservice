@@ -4,10 +4,10 @@ import com.thirikkale.scheduledrideservice.model.ScheduledSharedRideGroup;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public interface ScheduledSharedRideGroupRepository extends MongoRepository<ScheduledSharedRideGroup, String> {
     List<ScheduledSharedRideGroup> findByStatusAndScheduledWindowStartLessThanEqualAndScheduledWindowEndGreaterThanEqual(
-            ScheduledRideStatus status, LocalDateTime end, LocalDateTime start);
+            ScheduledRideStatus status, Instant end, Instant start);
 }

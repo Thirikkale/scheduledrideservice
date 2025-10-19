@@ -3,13 +3,13 @@ package com.thirikkale.scheduledrideservice.service;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public interface ScheduledRideService {
     ScheduledRideResponseDto scheduleRide(ScheduledRideCreateRequestDto request);
     ScheduledRideResponseDto cancelRide(String id);
-    List<String> dispatchDueSoloRides(LocalDateTime dispatchBefore);
+    List<String> dispatchDueSoloRides(Instant dispatchBefore);
     List<ScheduledRideResponseDto> getAllRides();
     List<ScheduledRideResponseDto> getRidesByRiderId(String riderId);
     List<ScheduledRideResponseDto> getRidesByDriverId(String driverId);
