@@ -10,7 +10,9 @@ public interface ScheduledRideService {
     ScheduledRideResponseDto scheduleRide(ScheduledRideCreateRequestDto request);
     ScheduledRideResponseDto cancelRide(String id);
     List<String> dispatchDueSoloRides(LocalDateTime dispatchBefore);
+    List<ScheduledRideResponseDto> getAllRides();
     List<ScheduledRideResponseDto> getRidesByRiderId(String riderId);
+    List<ScheduledRideResponseDto> getRidesByDriverId(String driverId);
     ScheduledRideResponseDto assignDriverToRide(String rideId, String driverId);
     ScheduledRideResponseDto removeDriverFromRide(String rideId);
 }

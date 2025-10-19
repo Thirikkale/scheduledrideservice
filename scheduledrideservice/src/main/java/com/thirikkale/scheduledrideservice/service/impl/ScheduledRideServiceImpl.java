@@ -18,6 +18,33 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class ScheduledRideServiceImpl implements ScheduledRideService {
+    @Override
+    public List<ScheduledRideResponseDto> getRidesByDriverId(String driverId) {
+        List<ScheduledRide> rides = repo.findByDriverId(driverId);
+        return rides.stream().map(r -> ScheduledRideResponseDto.builder()
+            .id(r.getId())
+            .riderId(r.getRiderId())
+            .pickupAddress(r.getPickupAddress())
+            .pickupLatitude(r.getPickupLatitude())
+            .pickupLongitude(r.getPickupLongitude())
+            .dropoffAddress(r.getDropoffAddress())
+            .dropoffLatitude(r.getDropoffLatitude())
+            .dropoffLongitude(r.getDropoffLongitude())
+            .passengers(r.getPassengers())
+            .isSharedRide(r.getIsSharedRide())
+            .scheduledTime(r.getScheduledTime())
+            .status(r.getStatus().name())
+            .sharedGroupId(r.getSharedGroupId())
+            .rideType(r.getRideType())
+            .vehicleType(r.getVehicleType())
+            .distanceKm(r.getDistanceKm())
+            .waitingTimeMin(r.getWaitingTimeMin())
+            .isWomenOnly(r.getIsWomenOnly())
+            .driverId(r.getDriverId())
+            .maxFare(r.getMaxFare())
+            .specialRequests(r.getSpecialRequests())
+            .build()).toList();
+    }
 
     private final ScheduledRideRepository repo;
     private final RideRequestPublisher publisher;
@@ -116,6 +143,34 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         repo.saveAll(rides);
     // Return String ids directly
     return rides.stream().map(ScheduledRide::getId).toList();
+    }
+
+    @Override
+    public List<ScheduledRideResponseDto> getAllRides() {
+        List<ScheduledRide> rides = repo.findAll();
+        return rides.stream().map(r -> ScheduledRideResponseDto.builder()
+            .id(r.getId())
+            .riderId(r.getRiderId())
+            .pickupAddress(r.getPickupAddress())
+            .pickupLatitude(r.getPickupLatitude())
+            .pickupLongitude(r.getPickupLongitude())
+            .dropoffAddress(r.getDropoffAddress())
+            .dropoffLatitude(r.getDropoffLatitude())
+            .dropoffLongitude(r.getDropoffLongitude())
+            .passengers(r.getPassengers())
+            .isSharedRide(r.getIsSharedRide())
+            .scheduledTime(r.getScheduledTime())
+            .status(r.getStatus().name())
+            .sharedGroupId(r.getSharedGroupId())
+            .rideType(r.getRideType())
+            .vehicleType(r.getVehicleType())
+            .distanceKm(r.getDistanceKm())
+            .waitingTimeMin(r.getWaitingTimeMin())
+            .isWomenOnly(r.getIsWomenOnly())
+            .driverId(r.getDriverId())
+            .maxFare(r.getMaxFare())
+            .specialRequests(r.getSpecialRequests())
+            .build()).toList();
     }
 
     @Override

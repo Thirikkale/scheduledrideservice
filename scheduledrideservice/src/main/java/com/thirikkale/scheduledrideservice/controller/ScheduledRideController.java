@@ -18,6 +18,20 @@ import org.slf4j.LoggerFactory;
 @RequestMapping("/api/scheduled-rides")
 @RequiredArgsConstructor
 public class ScheduledRideController {
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<java.util.List<ScheduledRideResponseDto>> getRidesByDriver(@PathVariable String driverId) {
+        log.debug("Fetching rides for driverId: {}", driverId);
+        try {
+            java.util.List<ScheduledRideResponseDto> rides = scheduledRideService.getRidesByDriverId(driverId);
+            log.debug("Found {} rides for driverId: {}", rides.size(), driverId);
+            return ResponseEntity.ok(rides);
+        } catch (RuntimeException ex) {
+            log.error("Error fetching rides: {}", ex.getMessage());
+            java.util.List<ScheduledRideResponseDto> errorList = new java.util.ArrayList<>();
+            errorList.add(ScheduledRideResponseDto.builder().status("ERROR: " + ex.getMessage()).build());
+            return ResponseEntity.status(400).body(errorList);
+        }
+    }
     private static final Logger log = LoggerFactory.getLogger(ScheduledRideController.class);
     private final ScheduledRideService scheduledRideService;
 
@@ -54,6 +68,21 @@ public class ScheduledRideController {
                     .message(errorMsg)
                     .build()
             );
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<ScheduledRideResponseDto>> getAllRides() {
+        log.debug("Fetching all scheduled rides");
+        try {
+            java.util.List<ScheduledRideResponseDto> rides = scheduledRideService.getAllRides();
+            log.debug("Found {} total rides", rides.size());
+            return ResponseEntity.ok(rides);
+        } catch (RuntimeException ex) {
+            log.error("Error fetching all rides: {}", ex.getMessage());
+            java.util.List<ScheduledRideResponseDto> errorList = new java.util.ArrayList<>();
+            errorList.add(ScheduledRideResponseDto.builder().status("ERROR: " + ex.getMessage()).build());
+            return ResponseEntity.status(400).body(errorList);
         }
     }
 
