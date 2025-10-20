@@ -2,6 +2,7 @@ package com.thirikkale.scheduledrideservice.service.impl;
 
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
+import com.thirikkale.scheduledrideservice.mapper.ScheduledRideMapper;
 import com.thirikkale.scheduledrideservice.model.ScheduledRide;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 import com.thirikkale.scheduledrideservice.repository.ScheduledRideRepository;
@@ -21,29 +22,9 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
     @Override
     public List<ScheduledRideResponseDto> getRidesByDriverId(String driverId) {
         List<ScheduledRide> rides = repo.findByDriverId(driverId);
-        return rides.stream().map(r -> ScheduledRideResponseDto.builder()
-            .id(r.getId())
-            .riderId(r.getRiderId())
-            .pickupAddress(r.getPickupAddress())
-            .pickupLatitude(r.getPickupLatitude())
-            .pickupLongitude(r.getPickupLongitude())
-            .dropoffAddress(r.getDropoffAddress())
-            .dropoffLatitude(r.getDropoffLatitude())
-            .dropoffLongitude(r.getDropoffLongitude())
-            .passengers(r.getPassengers())
-            .isSharedRide(r.getIsSharedRide())
-            .scheduledTime(r.getScheduledTime())
-            .status(r.getStatus().name())
-            .sharedGroupId(r.getSharedGroupId())
-            .rideType(r.getRideType())
-            .vehicleType(r.getVehicleType())
-            .distanceKm(r.getDistanceKm())
-            .waitingTimeMin(r.getWaitingTimeMin())
-            .isWomenOnly(r.getIsWomenOnly())
-            .driverId(r.getDriverId())
-            .maxFare(r.getMaxFare())
-            .specialRequests(r.getSpecialRequests())
-            .build()).toList();
+        return rides.stream()
+                .map(ScheduledRideMapper::toDto)
+                .toList();
     }
 
     private final ScheduledRideRepository repo;
@@ -51,58 +32,17 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
 
     @Override
     public ScheduledRideResponseDto scheduleRide(ScheduledRideCreateRequestDto req) {
-    Instant now = Instant.now();
-    ScheduledRide ride = ScheduledRide.builder()
-        .riderId(req.getRiderId())
-        .pickupAddress(req.getPickupAddress())
-        .pickupLatitude(req.getPickupLatitude())
-        .pickupLongitude(req.getPickupLongitude())
-        .dropoffAddress(req.getDropoffAddress())
-        .dropoffLatitude(req.getDropoffLatitude())
-        .dropoffLongitude(req.getDropoffLongitude())
-        .passengers(req.getPassengers())
-            .isSharedRide(req.getIsSharedRide())
-        .scheduledTime(req.getScheduledTime())
-            .status(req.getIsSharedRide() ? ScheduledRideStatus.GROUPING : ScheduledRideStatus.SCHEDULED)
-        .rideType(req.getRideType())
-        .vehicleType(req.getVehicleType())
-        .distanceKm(req.getDistanceKm())
-        .waitingTimeMin(req.getWaitingTimeMin())
-            .isWomenOnly(req.getIsWomenOnly())
-            .driverId(req.getDriverId())
-        .maxFare(req.getMaxFare())
-        .specialRequests(req.getSpecialRequests())
-        .createdAt(now)
-        .updatedAt(now)
-        .build(); // MongoDB will auto-generate id
-    ride = repo.save(ride);
-    // Publish solo ride request if not shared
-    if (!ride.getIsSharedRide()) {
-        publisher.publishSoloRideRequest(ride);
-    }
-    return ScheduledRideResponseDto.builder()
-        .id(ride.getId())
-        .riderId(ride.getRiderId())
-        .pickupAddress(ride.getPickupAddress())
-        .pickupLatitude(ride.getPickupLatitude())
-        .pickupLongitude(ride.getPickupLongitude())
-        .dropoffAddress(ride.getDropoffAddress())
-        .dropoffLatitude(ride.getDropoffLatitude())
-        .dropoffLongitude(ride.getDropoffLongitude())
-        .passengers(ride.getPassengers())
-            .isSharedRide(ride.getIsSharedRide())
-        .scheduledTime(ride.getScheduledTime())
-        .status(ride.getStatus().name())
-        .sharedGroupId(ride.getSharedGroupId())
-        .rideType(ride.getRideType())
-        .vehicleType(ride.getVehicleType())
-        .distanceKm(ride.getDistanceKm())
-        .waitingTimeMin(ride.getWaitingTimeMin())
-            .isWomenOnly(ride.getIsWomenOnly())
-            .driverId(ride.getDriverId())
-        .maxFare(ride.getMaxFare())
-        .specialRequests(ride.getSpecialRequests())
-        .build();
+        // Use mapper to convert DTO to entity with GeoJSON coordinates
+        ScheduledRide ride = ScheduledRideMapper.toEntity(req);
+        ride = repo.save(ride);
+        
+        // Publish solo ride request if not shared
+        if (!ride.getIsSharedRide()) {
+            publisher.publishSoloRideRequest(ride);
+        }
+        
+        // Use mapper to convert entity back to DTO
+        return ScheduledRideMapper.toDto(ride);
     }
 
     @Override
@@ -112,29 +52,7 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         ride.setStatus(ScheduledRideStatus.CANCELLED);
         ride.setUpdatedAt(Instant.now());
         ride = repo.save(ride);
-        return ScheduledRideResponseDto.builder()
-            .id(ride.getId())
-            .riderId(ride.getRiderId())
-            .pickupAddress(ride.getPickupAddress())
-            .pickupLatitude(ride.getPickupLatitude())
-            .pickupLongitude(ride.getPickupLongitude())
-            .dropoffAddress(ride.getDropoffAddress())
-            .dropoffLatitude(ride.getDropoffLatitude())
-            .dropoffLongitude(ride.getDropoffLongitude())
-            .passengers(ride.getPassengers())
-            .isSharedRide(ride.getIsSharedRide())
-            .scheduledTime(ride.getScheduledTime())
-            .status(ride.getStatus().name())
-            .sharedGroupId(ride.getSharedGroupId())
-            .rideType(ride.getRideType())
-            .vehicleType(ride.getVehicleType())
-            .distanceKm(ride.getDistanceKm())
-            .waitingTimeMin(ride.getWaitingTimeMin())
-            .isWomenOnly(ride.getIsWomenOnly())
-            .driverId(ride.getDriverId())
-            .maxFare(ride.getMaxFare())
-            .specialRequests(ride.getSpecialRequests())
-            .build();
+        return ScheduledRideMapper.toDto(ride);
     }
 
     @Override
@@ -153,29 +71,9 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
     @Override
     public List<ScheduledRideResponseDto> getAllRides() {
         List<ScheduledRide> rides = repo.findAll();
-        return rides.stream().map(r -> ScheduledRideResponseDto.builder()
-            .id(r.getId())
-            .riderId(r.getRiderId())
-            .pickupAddress(r.getPickupAddress())
-            .pickupLatitude(r.getPickupLatitude())
-            .pickupLongitude(r.getPickupLongitude())
-            .dropoffAddress(r.getDropoffAddress())
-            .dropoffLatitude(r.getDropoffLatitude())
-            .dropoffLongitude(r.getDropoffLongitude())
-            .passengers(r.getPassengers())
-            .isSharedRide(r.getIsSharedRide())
-            .scheduledTime(r.getScheduledTime())
-            .status(r.getStatus().name())
-            .sharedGroupId(r.getSharedGroupId())
-            .rideType(r.getRideType())
-            .vehicleType(r.getVehicleType())
-            .distanceKm(r.getDistanceKm())
-            .waitingTimeMin(r.getWaitingTimeMin())
-            .isWomenOnly(r.getIsWomenOnly())
-            .driverId(r.getDriverId())
-            .maxFare(r.getMaxFare())
-            .specialRequests(r.getSpecialRequests())
-            .build()).toList();
+        return rides.stream()
+                .map(ScheduledRideMapper::toDto)
+                .toList();
     }
 
     @Override
@@ -225,29 +123,7 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         ride.setUpdatedAt(Instant.now());
         ride = repo.save(ride);
         
-        return ScheduledRideResponseDto.builder()
-                .id(ride.getId())
-                .riderId(ride.getRiderId())
-                .pickupAddress(ride.getPickupAddress())
-                .pickupLatitude(ride.getPickupLatitude())
-                .pickupLongitude(ride.getPickupLongitude())
-                .dropoffAddress(ride.getDropoffAddress())
-                .dropoffLatitude(ride.getDropoffLatitude())
-                .dropoffLongitude(ride.getDropoffLongitude())
-                .passengers(ride.getPassengers())
-                .isSharedRide(ride.getIsSharedRide())
-                .scheduledTime(ride.getScheduledTime())
-                .status(ride.getStatus().name())
-                .sharedGroupId(ride.getSharedGroupId())
-                .rideType(ride.getRideType())
-                .vehicleType(ride.getVehicleType())
-                .distanceKm(ride.getDistanceKm())
-                .waitingTimeMin(ride.getWaitingTimeMin())
-                .isWomenOnly(ride.getIsWomenOnly())
-                .driverId(ride.getDriverId())
-                .maxFare(ride.getMaxFare())
-                .specialRequests(ride.getSpecialRequests())
-                .build();
+        return ScheduledRideMapper.toDto(ride);
     }
 
     @Override
@@ -269,28 +145,6 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         ride.setUpdatedAt(Instant.now());
         ride = repo.save(ride);
         
-        return ScheduledRideResponseDto.builder()
-                .id(ride.getId())
-                .riderId(ride.getRiderId())
-                .pickupAddress(ride.getPickupAddress())
-                .pickupLatitude(ride.getPickupLatitude())
-                .pickupLongitude(ride.getPickupLongitude())
-                .dropoffAddress(ride.getDropoffAddress())
-                .dropoffLatitude(ride.getDropoffLatitude())
-                .dropoffLongitude(ride.getDropoffLongitude())
-                .passengers(ride.getPassengers())
-                .isSharedRide(ride.getIsSharedRide())
-                .scheduledTime(ride.getScheduledTime())
-                .status(ride.getStatus().name())
-                .sharedGroupId(ride.getSharedGroupId())
-                .rideType(ride.getRideType())
-                .vehicleType(ride.getVehicleType())
-                .distanceKm(ride.getDistanceKm())
-                .waitingTimeMin(ride.getWaitingTimeMin())
-                .isWomenOnly(ride.getIsWomenOnly())
-                .driverId(ride.getDriverId())
-                .maxFare(ride.getMaxFare())
-                .specialRequests(ride.getSpecialRequests())
-                .build();
+        return ScheduledRideMapper.toDto(ride);
     }
 }
