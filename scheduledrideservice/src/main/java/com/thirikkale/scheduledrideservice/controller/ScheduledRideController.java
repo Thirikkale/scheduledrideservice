@@ -2,6 +2,7 @@
 
 package com.thirikkale.scheduledrideservice.controller;
 
+import com.thirikkale.scheduledrideservice.dto.NearbyUserResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ErrorResponseDto;
@@ -149,6 +150,27 @@ public class ScheduledRideController {
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
             log.error("Error removing driver: {}", ex.getMessage());
+            return ResponseEntity.status(400).body(
+                ErrorResponseDto.builder()
+                    .error("BAD_REQUEST")
+                    .message(ex.getMessage())
+                    .build()
+            );
+        }
+    }
+
+    @GetMapping("/nearby")
+    public ResponseEntity<?> getNearbyUsers(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(defaultValue = "5.0") Double radiusKm) {
+        log.debug("Finding nearby users (SCHEDULED/GROUPING only) - lat: {}, lon: {}, radius: {} km", latitude, longitude, radiusKm);
+        try {
+            java.util.List<NearbyUserResponseDto> nearbyUsers = scheduledRideService.findNearbyUsers(latitude, longitude, radiusKm);
+            log.debug("Found {} nearby users within {} km", nearbyUsers.size(), radiusKm);
+            return ResponseEntity.ok(nearbyUsers);
+        } catch (RuntimeException ex) {
+            log.error("Error finding nearby users: {}", ex.getMessage());
             return ResponseEntity.status(400).body(
                 ErrorResponseDto.builder()
                     .error("BAD_REQUEST")

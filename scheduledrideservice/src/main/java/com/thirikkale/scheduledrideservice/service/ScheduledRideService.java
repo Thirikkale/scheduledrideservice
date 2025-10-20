@@ -1,5 +1,6 @@
 package com.thirikkale.scheduledrideservice.service;
 
+import com.thirikkale.scheduledrideservice.dto.NearbyUserResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
 
@@ -15,4 +16,5 @@ public interface ScheduledRideService {
     List<ScheduledRideResponseDto> getRidesByDriverId(String driverId);
     ScheduledRideResponseDto assignDriverToRide(String rideId, String driverId);
     ScheduledRideResponseDto removeDriverFromRide(String rideId);
+    List<NearbyUserResponseDto> findNearbyUsers(Double latitude, Double longitude, Double radiusKm);
 }
