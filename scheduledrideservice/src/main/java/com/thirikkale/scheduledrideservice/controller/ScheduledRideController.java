@@ -3,6 +3,8 @@
 package com.thirikkale.scheduledrideservice.controller;
 
 import com.thirikkale.scheduledrideservice.dto.NearbyUserResponseDto;
+import com.thirikkale.scheduledrideservice.dto.RouteMatchRequestDto;
+import com.thirikkale.scheduledrideservice.dto.RouteMatchResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ErrorResponseDto;
@@ -171,6 +173,49 @@ public class ScheduledRideController {
             return ResponseEntity.ok(nearbyUsers);
         } catch (RuntimeException ex) {
             log.error("Error finding nearby users: {}", ex.getMessage());
+            return ResponseEntity.status(400).body(
+                ErrorResponseDto.builder()
+                    .error("BAD_REQUEST")
+                    .message(ex.getMessage())
+                    .build()
+            );
+        }
+    }
+
+    @GetMapping("/nearby-dropoff")
+    public ResponseEntity<?> getNearbyUsersByDropoff(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(defaultValue = "5.0") Double radiusKm) {
+        log.debug("Finding users with nearby dropoff points (SCHEDULED/GROUPING only) - lat: {}, lon: {}, radius: {} km", 
+                  latitude, longitude, radiusKm);
+        try {
+            java.util.List<NearbyUserResponseDto> nearbyUsers = scheduledRideService.findNearbyUsersByDropoff(latitude, longitude, radiusKm);
+            log.debug("Found {} users with dropoff points within {} km", nearbyUsers.size(), radiusKm);
+            return ResponseEntity.ok(nearbyUsers);
+        } catch (RuntimeException ex) {
+            log.error("Error finding nearby dropoff users: {}", ex.getMessage());
+            return ResponseEntity.status(400).body(
+                ErrorResponseDto.builder()
+                    .error("BAD_REQUEST")
+                    .message(ex.getMessage())
+                    .build()
+            );
+        }
+    }
+
+    @PostMapping("/route-match")
+    public ResponseEntity<?> findRouteMatches(@Valid @RequestBody RouteMatchRequestDto request) {
+        log.debug("Finding route matches - pickup: ({}, {}), dropoff: ({}, {}), pickup radius: {} km, dropoff radius: {} km",
+                  request.getPickupLatitude(), request.getPickupLongitude(),
+                  request.getDropoffLatitude(), request.getDropoffLongitude(),
+                  request.getPickupRadiusKm(), request.getDropoffRadiusKm());
+        try {
+            java.util.List<RouteMatchResponseDto> matches = scheduledRideService.findRouteMatches(request);
+            log.debug("Found {} route matches", matches.size());
+            return ResponseEntity.ok(matches);
+        } catch (RuntimeException ex) {
+            log.error("Error finding route matches: {}", ex.getMessage());
             return ResponseEntity.status(400).body(
                 ErrorResponseDto.builder()
                     .error("BAD_REQUEST")

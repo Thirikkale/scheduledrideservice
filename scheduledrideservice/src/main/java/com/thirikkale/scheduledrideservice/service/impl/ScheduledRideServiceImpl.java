@@ -1,6 +1,8 @@
 package com.thirikkale.scheduledrideservice.service.impl;
 
 import com.thirikkale.scheduledrideservice.dto.NearbyUserResponseDto;
+import com.thirikkale.scheduledrideservice.dto.RouteMatchRequestDto;
+import com.thirikkale.scheduledrideservice.dto.RouteMatchResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
 import com.thirikkale.scheduledrideservice.mapper.ScheduledRideMapper;
@@ -193,6 +195,107 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
                 .collect(Collectors.toList());
     }
     
+    @Override
+    public List<NearbyUserResponseDto> findNearbyUsersByDropoff(Double latitude, Double longitude, Double radiusKm) {
+        if (latitude == null || longitude == null) {
+            throw new RuntimeException("Latitude and longitude are required");
+        }
+        
+        if (radiusKm == null || radiusKm <= 0) {
+            throw new RuntimeException("Radius must be a positive number");
+        }
+        
+        // Get all scheduled rides
+        List<ScheduledRide> allRides = repo.findAll();
+        
+        // Filter rides by status (SCHEDULED or GROUPING only), dropoff coordinates, and distance
+        return allRides.stream()
+                .filter(ride -> ride.getStatus() == ScheduledRideStatus.SCHEDULED || 
+                               ride.getStatus() == ScheduledRideStatus.GROUPING)
+                .filter(ride -> ride.getDropoffLatitude() != null && ride.getDropoffLongitude() != null)
+                .map(ride -> {
+                    double distance = DistanceCalculator.calculateDistance(
+                            latitude, longitude,
+                            ride.getDropoffLatitude(), ride.getDropoffLongitude()
+                    );
+                    return new RideDistancePair(ride, distance);
+                })
+                .filter(pair -> pair.distance <= radiusKm)
+                .sorted((a, b) -> Double.compare(a.distance, b.distance))
+                .map(pair -> NearbyUserResponseDto.builder()
+                        .id(pair.ride.getId())
+                        .riderId(pair.ride.getRiderId())
+                        .pickupAddress(pair.ride.getDropoffAddress()) // Using dropoff as the relevant address
+                        .pickupLatitude(pair.ride.getDropoffLatitude()) // Using dropoff coordinates
+                        .pickupLongitude(pair.ride.getDropoffLongitude())
+                        .distanceKm(Math.round(pair.distance * 100.0) / 100.0) // Round to 2 decimal places
+                        .scheduledTime(pair.ride.getScheduledTime())
+                        .status(pair.ride.getStatus().name())
+                        .passengers(pair.ride.getPassengers())
+                        .isSharedRide(pair.ride.getIsSharedRide())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RouteMatchResponseDto> findRouteMatches(RouteMatchRequestDto request) {
+        if (request.getPickupLatitude() == null || request.getPickupLongitude() == null) {
+            throw new RuntimeException("Pickup latitude and longitude are required");
+        }
+        
+        if (request.getDropoffLatitude() == null || request.getDropoffLongitude() == null) {
+            throw new RuntimeException("Dropoff latitude and longitude are required");
+        }
+        
+        Double pickupRadiusKm = request.getPickupRadiusKm() != null ? request.getPickupRadiusKm() : 5.0;
+        Double dropoffRadiusKm = request.getDropoffRadiusKm() != null ? request.getDropoffRadiusKm() : 5.0;
+        
+        if (pickupRadiusKm <= 0 || dropoffRadiusKm <= 0) {
+            throw new RuntimeException("Radius values must be positive numbers");
+        }
+        
+        // Get all scheduled rides
+        List<ScheduledRide> allRides = repo.findAll();
+        
+        // Filter rides by status and both pickup and dropoff distances
+        return allRides.stream()
+                .filter(ride -> ride.getStatus() == ScheduledRideStatus.SCHEDULED || 
+                               ride.getStatus() == ScheduledRideStatus.GROUPING)
+                .filter(ride -> ride.getPickupLatitude() != null && ride.getPickupLongitude() != null &&
+                               ride.getDropoffLatitude() != null && ride.getDropoffLongitude() != null)
+                .map(ride -> {
+                    double pickupDistance = DistanceCalculator.calculateDistance(
+                            request.getPickupLatitude(), request.getPickupLongitude(),
+                            ride.getPickupLatitude(), ride.getPickupLongitude()
+                    );
+                    double dropoffDistance = DistanceCalculator.calculateDistance(
+                            request.getDropoffLatitude(), request.getDropoffLongitude(),
+                            ride.getDropoffLatitude(), ride.getDropoffLongitude()
+                    );
+                    return new RouteDistancePair(ride, pickupDistance, dropoffDistance);
+                })
+                .filter(pair -> pair.pickupDistance <= pickupRadiusKm && pair.dropoffDistance <= dropoffRadiusKm)
+                .sorted((a, b) -> Double.compare(a.getTotalDistance(), b.getTotalDistance()))
+                .map(pair -> RouteMatchResponseDto.builder()
+                        .id(pair.ride.getId())
+                        .riderId(pair.ride.getRiderId())
+                        .pickupAddress(pair.ride.getPickupAddress())
+                        .pickupLatitude(pair.ride.getPickupLatitude())
+                        .pickupLongitude(pair.ride.getPickupLongitude())
+                        .pickupDistanceKm(Math.round(pair.pickupDistance * 100.0) / 100.0)
+                        .dropoffAddress(pair.ride.getDropoffAddress())
+                        .dropoffLatitude(pair.ride.getDropoffLatitude())
+                        .dropoffLongitude(pair.ride.getDropoffLongitude())
+                        .dropoffDistanceKm(Math.round(pair.dropoffDistance * 100.0) / 100.0)
+                        .totalDistanceKm(Math.round(pair.getTotalDistance() * 100.0) / 100.0)
+                        .scheduledTime(pair.ride.getScheduledTime())
+                        .status(pair.ride.getStatus().name())
+                        .passengers(pair.ride.getPassengers())
+                        .isSharedRide(pair.ride.getIsSharedRide())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     // Helper class to hold ride and distance pair
     private static class RideDistancePair {
         final ScheduledRide ride;
@@ -201,6 +304,23 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
         RideDistancePair(ScheduledRide ride, double distance) {
             this.ride = ride;
             this.distance = distance;
+        }
+    }
+    
+    // Helper class to hold ride with pickup and dropoff distances
+    private static class RouteDistancePair {
+        final ScheduledRide ride;
+        final double pickupDistance;
+        final double dropoffDistance;
+        
+        RouteDistancePair(ScheduledRide ride, double pickupDistance, double dropoffDistance) {
+            this.ride = ride;
+            this.pickupDistance = pickupDistance;
+            this.dropoffDistance = dropoffDistance;
+        }
+        
+        double getTotalDistance() {
+            return pickupDistance + dropoffDistance;
         }
     }
 }
