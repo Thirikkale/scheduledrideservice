@@ -2,7 +2,6 @@ package com.thirikkale.scheduledrideservice.mapper;
 
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
-import com.thirikkale.scheduledrideservice.model.GeoJsonPoint;
 import com.thirikkale.scheduledrideservice.model.ScheduledRide;
 import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 
@@ -10,12 +9,12 @@ import java.time.Instant;
 
 /**
  * Mapper utility for converting between ScheduledRide entities and DTOs
- * Handles GeoJSON coordinate conversion automatically
+ * Uses manual coordinate handling without GeoJSON
  */
 public class ScheduledRideMapper {
 
     /**
-     * Maps DTO to entity with GeoJSON coordinates
+     * Maps DTO to entity with regular latitude/longitude coordinates
      */
     public static ScheduledRide toEntity(ScheduledRideCreateRequestDto dto) {
         if (dto == null) {
@@ -28,11 +27,9 @@ public class ScheduledRideMapper {
                 .pickupAddress(dto.getPickupAddress())
                 .pickupLatitude(dto.getPickupLatitude())
                 .pickupLongitude(dto.getPickupLongitude())
-                .pickupLocation(GeoJsonPoint.of(dto.getPickupLatitude(), dto.getPickupLongitude()))
                 .dropoffAddress(dto.getDropoffAddress())
                 .dropoffLatitude(dto.getDropoffLatitude())
                 .dropoffLongitude(dto.getDropoffLongitude())
-                .dropoffLocation(GeoJsonPoint.of(dto.getDropoffLatitude(), dto.getDropoffLongitude()))
                 .passengers(dto.getPassengers())
                 .isSharedRide(dto.getIsSharedRide())
                 .scheduledTime(dto.getScheduledTime())

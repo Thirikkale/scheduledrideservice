@@ -19,12 +19,10 @@ public class ScheduledRide {
     private String pickupAddress;
     private Double pickupLatitude;
     private Double pickupLongitude;
-    private GeoJsonPoint pickupLocation; // GeoJSON Point for geospatial queries
 
     private String dropoffAddress;
     private Double dropoffLatitude;
     private Double dropoffLongitude;
-    private GeoJsonPoint dropoffLocation; // GeoJSON Point for geospatial queries
 
     private Integer passengers;
     private Boolean isSharedRide; // true for shared ride request
@@ -56,35 +54,4 @@ public class ScheduledRide {
     private Instant createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant updatedAt;
-
-    /**
-     * Sets pickup coordinates and automatically updates GeoJSON location
-     */
-    public void setPickupCoordinates(Double latitude, Double longitude) {
-        this.pickupLatitude = latitude;
-        this.pickupLongitude = longitude;
-        this.pickupLocation = GeoJsonPoint.of(latitude, longitude);
-    }
-
-    /**
-     * Sets dropoff coordinates and automatically updates GeoJSON location
-     */
-    public void setDropoffCoordinates(Double latitude, Double longitude) {
-        this.dropoffLatitude = latitude;
-        this.dropoffLongitude = longitude;
-        this.dropoffLocation = GeoJsonPoint.of(latitude, longitude);
-    }
-
-    /**
-     * Ensures GeoJSON points are synced with lat/long values
-     * Call this after loading from DB or before saving
-     */
-    public void syncGeoJsonPoints() {
-        if (pickupLatitude != null && pickupLongitude != null && pickupLocation == null) {
-            this.pickupLocation = GeoJsonPoint.of(pickupLatitude, pickupLongitude);
-        }
-        if (dropoffLatitude != null && dropoffLongitude != null && dropoffLocation == null) {
-            this.dropoffLocation = GeoJsonPoint.of(dropoffLatitude, dropoffLongitude);
-        }
-    }
 }
