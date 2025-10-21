@@ -224,4 +224,35 @@ public class ScheduledRideController {
             );
         }
     }
+
+    @PutMapping("/{rideId}/status")
+    public ResponseEntity<?> changeStatus(@PathVariable String rideId, 
+                                          @Valid @RequestBody com.thirikkale.scheduledrideservice.dto.ChangeStatusRequestDto request) {
+        log.debug("Changing status for ride {} to {}", rideId, request.getStatus());
+        try {
+            // Parse the status string to enum
+            com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus newStatus = 
+                com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus.valueOf(request.getStatus().toUpperCase());
+            
+            ScheduledRideResponseDto response = scheduledRideService.changeRideStatus(rideId, newStatus);
+            log.debug("Successfully changed status for ride {}", rideId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            log.error("Invalid status: {}", request.getStatus());
+            return ResponseEntity.status(400).body(
+                ErrorResponseDto.builder()
+                    .error("INVALID_STATUS")
+                    .message("Invalid status. Valid values are: SCHEDULED, GROUPING, DISPATCHED, CANCELLED, ONGOING, ENDED")
+                    .build()
+            );
+        } catch (RuntimeException ex) {
+            log.error("Error changing ride status: {}", ex.getMessage());
+            return ResponseEntity.status(ex.getMessage().contains("No ride found") ? 404 : 400).body(
+                ErrorResponseDto.builder()
+                    .error(ex.getMessage().contains("No ride found") ? "NOT_FOUND" : "BAD_REQUEST")
+                    .message(ex.getMessage())
+                    .build()
+            );
+        }
+    }
 }

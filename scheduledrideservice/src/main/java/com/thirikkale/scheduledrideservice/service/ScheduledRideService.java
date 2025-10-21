@@ -5,6 +5,7 @@ import com.thirikkale.scheduledrideservice.dto.RouteMatchRequestDto;
 import com.thirikkale.scheduledrideservice.dto.RouteMatchResponseDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideCreateRequestDto;
 import com.thirikkale.scheduledrideservice.dto.ScheduledRideResponseDto;
+import com.thirikkale.scheduledrideservice.model.enums.ScheduledRideStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,4 +22,5 @@ public interface ScheduledRideService {
     List<NearbyUserResponseDto> findNearbyUsers(Double latitude, Double longitude, Double radiusKm);
     List<NearbyUserResponseDto> findNearbyUsersByDropoff(Double latitude, Double longitude, Double radiusKm);
     List<RouteMatchResponseDto> findRouteMatches(RouteMatchRequestDto request);
+    ScheduledRideResponseDto changeRideStatus(String rideId, ScheduledRideStatus newStatus);
 }

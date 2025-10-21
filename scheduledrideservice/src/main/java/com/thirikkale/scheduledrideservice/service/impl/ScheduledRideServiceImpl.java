@@ -353,4 +353,16 @@ public class ScheduledRideServiceImpl implements ScheduledRideService {
             return pickupDistance + dropoffDistance;
         }
     }
+    
+    @Override
+    public ScheduledRideResponseDto changeRideStatus(String rideId, ScheduledRideStatus newStatus) {
+        ScheduledRide ride = repo.findById(rideId)
+            .orElseThrow(() -> new RuntimeException("No ride found with id: " + rideId));
+        
+        ride.setStatus(newStatus);
+        ride.setUpdatedAt(Instant.now());
+        ride = repo.save(ride);
+        
+        return ScheduledRideMapper.toDto(ride);
+    }
 }
